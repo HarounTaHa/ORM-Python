@@ -11,6 +11,7 @@ class Database:
     def connect(self):
         try:
             self.connection = sqlite3.connect(self.path)
+            self.connection.row_factory = sqlite3.Row
             self.connected = True
         except sqlite3.Error as e:
             print(e)

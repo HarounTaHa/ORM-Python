@@ -21,3 +21,4 @@ class User(Model):
 
 if __name__ == '__main__':
     post = Post()
+    print(post.get(1))

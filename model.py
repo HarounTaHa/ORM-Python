@@ -25,3 +25,76 @@ class Model:
         cursor = self.connection.cursor()
         result = cursor.execute(sql)
         return result
+
+    def save(self):
+        if self._save:
+            self._update()
+            return
+        fields = []
+        values = []
+        for key, value in self._get_values().items():
+            fields.append(key)
+            values.append(f'{value}')
+
+        self._insert_info(fields, values)
+
+    def _get_values(self):
+        values = {}
+        for key, value in self.__dict__.items():
+            if str(key).startswith('_'):
+                continue
+            if value is False:
+                value = 0
+            if value is True:
+                value = 1
+            values[key] = value
+        return values
+
+    @classmethod
+    def create(cls, **kwargs):
+        fields = list(kwargs.keys())
+        values = []
+        for value in kwargs.values():
+            values.append(value)
+        cls._insert_info(fields, values)
+
+    @classmethod
+    def _insert_info(cls, fields, values):
+        sql = f'INSERT INTO {cls._get_table_name()} ({", ".join(fields)}) VALUES ({", ".join(values)})'
+        result = cls.connection.execute(sql)
+        cls.connection.commit()
+        cls._saved = True
+        return result
+
+    @classmethod
+    def all(cls):
+        sql = f'SELECT * FROM {cls._get_table_name()}'
+        records = cls.connection.execute(sql)
+        return [dict(row) for row in records.fetchall()]
+
+    @classmethod
+    def get(cls, id):
+        sql = f'SELECT * FROM {cls._get_table_name()} WHERE id = {id}'
+        record = cls.connection.execute(sql)
+        return dict(record.fetchone())
+
+    @classmethod
+    def find(cls, col_name, operator, value):
+        if operator == 'LIKE':
+            value = '%' + value + '%'
+
+        sql = f'SELECT * FROM {cls._get_table_name()} WHERE {col_name} {operator} "{value}"'
+        records = cls.connection.execute(sql)
+        return [dict(row) for row in records.fetchall()]
+
+    def _update(self):
+        old = self.find('create_at', '=', self._get_values()['created_at'])
+        old_id = old[0][0]
+        new_values = []
+        for key, value in self._get_values().items():
+            new_values.append(f'{key} = "{value}"')
+        expression = ', '.join(new_values)
+        sql = f'UPDATE {self._get_table_name()} SET {expression} WHERE id = {old_id}'
+        cursor = self.connection.cursor()
+        result = cursor.execute(sql)
+        return result
