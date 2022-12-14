@@ -76,7 +76,10 @@ class Model:
     def get(cls, id):
         sql = f'SELECT * FROM {cls._get_table_name()} WHERE id = {id}'
         record = cls.connection.execute(sql)
-        return dict(record.fetchone())
+        result = record.fetchone()
+        if result is None:
+            return False
+        return dict(result)
 
     @classmethod
     def find(cls, col_name, operator, value):

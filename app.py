@@ -31,6 +31,17 @@ if __name__ == '__main__':
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(Post.all()).encode('utf-8'))
+            else:
+                post_id = int(self.path.split('/')[-1])
+                result = Post.get(post_id)
+                if result is False:
+                    self.send_response(404)
+                    self.wfile.write(b'Not Found')
+                    return
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                self.wfile.write(json.dumps(Post.get(post_id)).encode('utf-8'))
 
 
     with HTTPServer(("", PORT), MyHandler) as httpd:
