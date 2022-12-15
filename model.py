@@ -55,12 +55,13 @@ class Model:
         fields = list(kwargs.keys())
         values = []
         for value in kwargs.values():
-            values.append(value)
+            values.append(f"'{value}'")
         cls._insert_info(fields, values)
 
     @classmethod
     def _insert_info(cls, fields, values):
         sql = f'INSERT INTO {cls._get_table_name()} ({", ".join(fields)}) VALUES ({", ".join(values)})'
+        print(sql)
         result = cls.connection.execute(sql)
         cls.connection.commit()
         cls._saved = True

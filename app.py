@@ -1,4 +1,7 @@
 import json
+from datetime import datetime
+from urllib.parse import urlparse, parse_qs
+
 from model import Model
 from field import *
 from database import Database
@@ -26,7 +29,10 @@ class User(Model):
 if __name__ == '__main__':
     class MyHandler(SimpleHTTPRequestHandler):
         def do_GET(self) -> None:
-            if self.path == '/posts':
+            if self.path == '/':
+                return SimpleHTTPRequestHandler.do_GET(self)
+
+            elif self.path == '/posts':
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.end_headers()
@@ -42,6 +48,16 @@ if __name__ == '__main__':
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
                 self.wfile.write(json.dumps(Post.get(post_id)).encode('utf-8'))
+
+        def do_POST(self) -> None:
+            length = int(self.headers.get('Content-length'))
+            body = self.rfile.read(length)
+            string = urlparse(body)
+            post = parse_qs(string.path.decode('utf-8'))
+            Post.create(title=post['title'][0], body=post['body'][0], created_at=datetime.now(), published=False)
+            self.send_response(301)
+            self.send_header('Location', 'localhost:8000')
+            self.end_headers()
 
 
     with HTTPServer(("", PORT), MyHandler) as httpd:
